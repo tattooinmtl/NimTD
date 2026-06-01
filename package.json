@@ -1,7 +1,7 @@
 {
   "name": "nimtd",
   "productName": "NimTD",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Customizable pseudo-isometric tower-defense game engine and editor.",
   "author": "tattooinmtl",
   "license": "MIT",
@@ -41,6 +41,7 @@
       "preload.js",
       "js/**/*",
       "maps/**/*",
+      "sounds/**/*",
       "splash/**/*"
     ],
     "win": {

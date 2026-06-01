@@ -112,6 +112,7 @@ function createWindow(options = {}) {
   const gameMode = process.argv.includes('--game');
   const editorMode = process.argv.includes('--editor');
   const smokeFolderButton = process.argv.includes('--smoke-folder-button');
+  const smokeAudio = process.argv.includes('--smoke-audio');
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -120,7 +121,7 @@ function createWindow(options = {}) {
     title: gameMode ? 'NimTD Engine' : editorMode ? 'NimTD Map Editor' : 'NimTD',
     backgroundColor: '#0a0a14',
     icon: path.join(__dirname, 'splash', 'logo.png'),
-    show: options.show ?? !smokeFolderButton,
+    show: options.show ?? !(smokeFolderButton || smokeAudio),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -147,6 +148,30 @@ function createWindow(options = {}) {
       app.exit(1);
     }
   });
+  if (smokeAudio) {
+    const loadAudio = "src=>new Promise(resolve=>{const audio=new Audio(src),done=ok=>{clearTimeout(timer);resolve(ok)};const timer=setTimeout(()=>done(false),2500);audio.addEventListener('loadedmetadata',()=>done(true),{once:true});audio.addEventListener('error',()=>done(false),{once:true});audio.load()})";
+    win.webContents.once('did-finish-load', async () => {
+      try {
+        const menu = await win.webContents.executeJavaScript(`(async()=>{const load=${loadAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playMusic==='function',widget:!!document.getElementById('audio-widget'),menu:await load('sounds/music/menu.ogg'),click:await load('sounds/sfx/ui_click.ogg')}})()`);
+        if (!menu.sound || !menu.widget || !menu.menu || !menu.click) throw new Error(`Menu audio smoke failed: ${JSON.stringify(menu)}`);
+        win.webContents.once('did-finish-load', async () => {
+          try {
+            const game = await win.webContents.executeJavaScript(`(async()=>{const load=${loadAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playTower==='function',widget:!!document.getElementById('audio-widget'),hooks:String(window.NimTD?.game?.shoot).includes('playTower'),battle:await load('sounds/music/battle.ogg'),tower:await load('sounds/towers/cannon.ogg')}})()`);
+            if (!game.sound || !game.widget || !game.hooks || !game.battle || !game.tower) throw new Error(`Game audio smoke failed: ${JSON.stringify(game)}`);
+            console.log('OK: menu audio, battle audio, tower audio, widget, and hooks loaded.');
+            app.exit(0);
+          } catch (error) {
+            console.error(error);
+            app.exit(1);
+          }
+        });
+        win.loadFile('game.html');
+      } catch (error) {
+        console.error(error);
+        app.exit(1);
+      }
+    });
+  }
   return win;
 }
 async function bootWithSplash() {
@@ -197,7 +222,7 @@ app.whenReady().then(async () => {
     setTimeout(() => app.quit(), 250);
     return;
   }
-  if (process.argv.includes('--smoke-folder-button') || process.argv.includes('--no-splash')) createWindow();
+  if (process.argv.includes('--smoke-folder-button') || process.argv.includes('--smoke-audio') || process.argv.includes('--no-splash')) createWindow();
   else await bootWithSplash();
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

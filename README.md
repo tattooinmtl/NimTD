@@ -34,6 +34,7 @@ NimTD is a customizable pseudo-isometric tower-defense engine with an Electron d
 - Tune waves, economy values, spawn pacing, and game speed.
 - Create custom towers with names, model styles, RGB colors, combat stats, and projectile prefabs.
 - Use 25 tower model styles and expanded effects such as poison, web, piercing, radiation, gravity, laser, reflect, and summon.
+- Hear procedural menu and battle music, tower firing sounds, combat effects, and UI feedback with persistent volume controls.
 - Save map mods locally and play-test them from the editor.
 
 ## Project Layout
@@ -44,6 +45,7 @@ NimTD is a customizable pseudo-isometric tower-defense engine with an Electron d
 - `electron-main.js`: Electron launcher, splash lifecycle, and map file bridge.
 - `js/`: game engine, effects, tower definitions, editor logic, and menu logic.
 - `maps/`: saved `.nimmaps` map files.
+- `sounds/`: procedural music, tower sounds, and game sound effects.
 - `splash/`: splash screen, logo, and font assets.
 - `default.nimmaps`: default playable map.
 

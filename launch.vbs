@@ -10,6 +10,9 @@ shell.CurrentDirectory = appDir
 If Not files.FileExists(electronExe) Then
   shell.Popup "NimTD is installing its Electron runtime. This first launch may take a moment.", 4, "NimTD Setup", 64
   exitCode = shell.Run("cmd /c npm install", 0, True)
+  If exitCode = 0 And Not files.FileExists(electronExe) And files.FileExists(appDir & "\node_modules\electron\install.js") Then
+    exitCode = shell.Run("cmd /c node node_modules\electron\install.js", 0, True)
+  End If
   If exitCode <> 0 Or Not files.FileExists(electronExe) Then
     shell.Popup "NimTD could not install its Electron runtime. Run npm install from the NimTD folder and try again.", 0, "NimTD Setup Error", 16
     WScript.Quit 1
