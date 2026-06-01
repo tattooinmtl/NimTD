@@ -1,14 +1,66 @@
 {
-  "name": "nimtd-engine",
+  "name": "nimtd",
+  "productName": "NimTD",
   "version": "1.0.0",
+  "description": "Customizable pseudo-isometric tower-defense game engine and editor.",
+  "author": "tattooinmtl",
+  "license": "MIT",
+  "homepage": "https://github.com/tattooinmtl/NimTD",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tattooinmtl/NimTD.git"
+  },
   "private": true,
   "main": "electron-main.js",
   "scripts": {
     "start": "set \"ELECTRON_RUN_AS_NODE=\" && electron .",
     "editor": "set \"ELECTRON_RUN_AS_NODE=\" && electron . --editor",
-    "game": "set \"ELECTRON_RUN_AS_NODE=\" && electron . --game"
+    "game": "set \"ELECTRON_RUN_AS_NODE=\" && electron . --game",
+    "pack:win": "electron-builder --win dir --x64",
+    "dist:win": "electron-builder --win nsis --x64"
   },
   "devDependencies": {
-    "electron": "^28.3.3"
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.tattooinmtl.nimtd",
+    "productName": "NimTD",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "default.nimmaps",
+      "editor.html",
+      "electron-main.js",
+      "game.html",
+      "index.html",
+      "LICENSE",
+      "package.json",
+      "preload.js",
+      "js/**/*",
+      "maps/**/*",
+      "splash/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png",
+      "artifactName": "NimTD-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NimTD"
+    }
   }
 }

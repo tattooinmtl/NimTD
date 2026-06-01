@@ -2,9 +2,9 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const mapsDir = path.join(__dirname, 'maps');
 const MAP_EXTENSION = '.nimmaps';
-const defaultMapFile = path.join(__dirname, `default${MAP_EXTENSION}`);
+const bundledMapsDir = path.join(__dirname, 'maps');
+const bundledDefaultMapFile = path.join(__dirname, `default${MAP_EXTENSION}`);
 const SPLASH_SIZE = 640;
 const MINIMUM_SPLASH_MS = 3000;
 const MAXIMUM_SPLASH_MS = 5000;
@@ -27,6 +27,7 @@ function createSplashWindow() {
     skipTaskbar: true,
     center: true,
     backgroundColor: '#020603',
+    icon: path.join(__dirname, 'splash', 'logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'splash', 'splash-preload.js'),
       nodeIntegration: false,
@@ -54,7 +55,7 @@ async function splashWait(ms, deadline) {
 }
 
 async function openMapsFolder() {
-  fs.mkdirSync(mapsDir, { recursive: true });
+  const mapsDir = ensureMapsDir();
   folderOpenRequests++;
   const error = await shell.openPath(mapsDir);
   if (!error) return '';
@@ -70,7 +71,24 @@ async function openMapsFolder() {
   throw new Error(error);
 }
 
-function ensureMapsDir() { fs.mkdirSync(mapsDir, { recursive: true }); }
+function dataDir() { return app.isPackaged ? app.getPath('userData') : __dirname; }
+function mapsDirectory() { return path.join(dataDir(), 'maps'); }
+function defaultMapFile() { return path.join(dataDir(), `default${MAP_EXTENSION}`); }
+function ensureMapsDir() {
+  const mapsDir = mapsDirectory();
+  fs.mkdirSync(mapsDir, { recursive: true });
+  if (app.isPackaged && fs.existsSync(bundledMapsDir)) {
+    for (const name of fs.readdirSync(bundledMapsDir).filter(supportedMapFile)) {
+      const destination = path.join(mapsDir, name);
+      if (!fs.existsSync(destination)) fs.copyFileSync(path.join(bundledMapsDir, name), destination);
+    }
+  }
+  const defaultFile = defaultMapFile();
+  if (app.isPackaged && !fs.existsSync(defaultFile) && fs.existsSync(bundledDefaultMapFile)) {
+    fs.copyFileSync(bundledDefaultMapFile, defaultFile);
+  }
+  return mapsDir;
+}
 function safeName(name) {
   const value = String(name || 'untitled-map').trim().replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80);
   return value || 'untitled-map';
@@ -80,7 +98,7 @@ function baseMapName(name) { return String(name || 'untitled-map').replace(/\.ni
 function mapPath(name) {
   const file = path.basename(String(name || ''));
   if (!supportedMapFile(file)) throw new Error('Unsupported NimTD map file.');
-  return path.join(mapsDir, file);
+  return path.join(mapsDirectory(), file);
 }
 function reply(event, action) {
   try { event.returnValue = { ok: true, value: action() }; }
@@ -101,6 +119,7 @@ function createWindow(options = {}) {
     minHeight: 600,
     title: gameMode ? 'NimTD Engine' : editorMode ? 'NimTD Map Editor' : 'NimTD',
     backgroundColor: '#0a0a14',
+    icon: path.join(__dirname, 'splash', 'logo.png'),
     show: options.show ?? !smokeFolderButton,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -112,7 +131,7 @@ function createWindow(options = {}) {
   if (smokeFolderButton) win.webContents.once('did-finish-load', async () => {
     try {
       const bridge = await win.webContents.executeJavaScript("({ folder: window.electronAPI.maps.folder(), files: window.electronAPI.maps.list() })");
-      if (bridge.folder !== mapsDir || !Array.isArray(bridge.files)) throw new Error('Map IPC bridge did not return the NimTD maps folder.');
+      if (bridge.folder !== mapsDirectory() || !Array.isArray(bridge.files)) throw new Error('Map IPC bridge did not return the NimTD maps folder.');
       await win.webContents.executeJavaScript("document.getElementById('open-folder').click()");
       setTimeout(() => {
         if (!folderOpenRequests) {
@@ -153,15 +172,15 @@ async function bootWithSplash() {
   if (!win.isDestroyed()) win.show();
   if (!splash.isDestroyed()) splash.close();
 }
-onSync('maps:list', () => { ensureMapsDir(); return fs.readdirSync(mapsDir).filter(supportedMapFile).sort(); });
-onSync('maps:save', (name, data) => { ensureMapsDir(); const file = `${safeName(baseMapName(name))}${MAP_EXTENSION}`; fs.writeFileSync(path.join(mapsDir, file), JSON.stringify(data, null, 2), 'utf8'); return file; });
-onSync('maps:set-default', data => { fs.writeFileSync(defaultMapFile, JSON.stringify(data, null, 2), 'utf8'); return path.basename(defaultMapFile); });
-onSync('maps:load-default', () => fs.existsSync(defaultMapFile) ? JSON.parse(fs.readFileSync(defaultMapFile, 'utf8')) : null);
+onSync('maps:list', () => { const mapsDir = ensureMapsDir(); return fs.readdirSync(mapsDir).filter(supportedMapFile).sort(); });
+onSync('maps:save', (name, data) => { const mapsDir = ensureMapsDir(); const file = `${safeName(baseMapName(name))}${MAP_EXTENSION}`; fs.writeFileSync(path.join(mapsDir, file), JSON.stringify(data, null, 2), 'utf8'); return file; });
+onSync('maps:set-default', data => { ensureMapsDir(); const file = defaultMapFile(); fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8'); return path.basename(file); });
+onSync('maps:load-default', () => { ensureMapsDir(); const file = defaultMapFile(); return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null; });
 onSync('maps:load', name => { ensureMapsDir(); return JSON.parse(fs.readFileSync(mapPath(name), 'utf8')); });
 onSync('maps:delete', name => { ensureMapsDir(); const file = mapPath(name); if (fs.existsSync(file)) fs.unlinkSync(file); });
-onSync('maps:folder', () => { ensureMapsDir(); return mapsDir; });
+onSync('maps:folder', () => ensureMapsDir());
 onSync('maps:choose', () => {
-  ensureMapsDir();
+  const mapsDir = ensureMapsDir();
   const files = dialog.showOpenDialogSync({
     title: 'Open NimTD Map',
     defaultPath: mapsDir,

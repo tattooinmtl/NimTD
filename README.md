@@ -8,9 +8,23 @@ NimTD is a customizable pseudo-isometric tower-defense engine with an Electron d
 
 ## Launch
 
+### Windows installer
+
+1. Download the latest `NimTD-Setup-*.exe` file from [GitHub Releases](https://github.com/tattooinmtl/NimTD/releases).
+2. Run the installer.
+3. Launch NimTD from the desktop or Start Menu shortcut.
+
+### From source
+
 1. Install [Node.js](https://nodejs.org/) if it is not already installed.
 2. Run `launch.bat`.
 3. The launcher installs Electron automatically on the first run, shows the NimTD splash screen, and opens the main menu.
+
+## Build
+
+- `npm install`: install development dependencies.
+- `npm run pack:win`: create an unpacked Windows build for local testing.
+- `npm run dist:win`: create the Windows NSIS installer in `dist/`.
 
 ## Features
 
