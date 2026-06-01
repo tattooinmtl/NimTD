@@ -107,6 +107,21 @@ function reply(event, action) {
 function onSync(channel, action) {
   ipcMain.on(channel, (event, ...args) => reply(event, () => action(...args)));
 }
+function audioSmokeResultFile() {
+  const argument = process.argv.find(value => value.startsWith('--smoke-audio-result='));
+  return argument ? argument.slice('--smoke-audio-result='.length) : '';
+}
+function finishAudioSmoke(ok, message) {
+  const output = `${ok ? 'OK' : 'ERROR'}: ${message}`;
+  if (ok) console.log(output);
+  else console.error(output);
+  const resultFile = audioSmokeResultFile();
+  if (resultFile) {
+    try { fs.writeFileSync(resultFile, output, 'utf8'); }
+    catch (error) { console.error(`Could not write audio smoke result: ${error.message}`); }
+  }
+  app.exit(ok ? 0 : 1);
+}
 
 function createWindow(options = {}) {
   const gameMode = process.argv.includes('--game');
@@ -149,26 +164,23 @@ function createWindow(options = {}) {
     }
   });
   if (smokeAudio) {
-    const loadAudio = "src=>new Promise(resolve=>{const audio=new Audio(src),done=ok=>{clearTimeout(timer);resolve(ok)};const timer=setTimeout(()=>done(false),2500);audio.addEventListener('loadedmetadata',()=>done(true),{once:true});audio.addEventListener('error',()=>done(false),{once:true});audio.load()})";
+    const playAudio = "src=>new Promise(async resolve=>{const audio=new Audio(src);let started=false;const done=ok=>{clearTimeout(timer);audio.pause();resolve(ok)};const timer=setTimeout(()=>done(false),3000);audio.addEventListener('playing',()=>{started=true},{once:true});try{audio.volume=.05;await audio.play();setTimeout(()=>done(started&&(audio.currentTime>0||audio.ended)),220)}catch{done(false)}})";
     win.webContents.once('did-finish-load', async () => {
       try {
-        const menu = await win.webContents.executeJavaScript(`(async()=>{const load=${loadAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playMusic==='function',widget:!!document.getElementById('audio-widget'),menu:await load('sounds/music/menu.ogg'),click:await load('sounds/sfx/ui_click.ogg')}})()`);
+        const menu = await win.webContents.executeJavaScript(`(async()=>{const play=${playAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playMusic==='function',widget:!!document.getElementById('audio-widget'),menu:await play('sounds/music/menu.ogg'),click:await play('sounds/sfx/ui_click.ogg')}})()`, true);
         if (!menu.sound || !menu.widget || !menu.menu || !menu.click) throw new Error(`Menu audio smoke failed: ${JSON.stringify(menu)}`);
         win.webContents.once('did-finish-load', async () => {
           try {
-            const game = await win.webContents.executeJavaScript(`(async()=>{const load=${loadAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playTower==='function',widget:!!document.getElementById('audio-widget'),hooks:String(window.NimTD?.game?.shoot).includes('playTower'),battle:await load('sounds/music/battle.ogg'),tower:await load('sounds/towers/cannon.ogg')}})()`);
+            const game = await win.webContents.executeJavaScript(`(async()=>{const play=${playAudio};document.body.click();return{sound:typeof window.NimTD?.sound?.playTower==='function',widget:!!document.getElementById('audio-widget'),hooks:String(window.NimTD?.game?.shoot).includes('playTower'),battle:await play('sounds/music/battle.ogg'),tower:await play('sounds/towers/cannon.ogg')}})()`, true);
             if (!game.sound || !game.widget || !game.hooks || !game.battle || !game.tower) throw new Error(`Game audio smoke failed: ${JSON.stringify(game)}`);
-            console.log('OK: menu audio, battle audio, tower audio, widget, and hooks loaded.');
-            app.exit(0);
+            finishAudioSmoke(true, 'menu music, UI SFX, battle music, and tower audio played; widget and hooks loaded.');
           } catch (error) {
-            console.error(error);
-            app.exit(1);
+            finishAudioSmoke(false, error.message);
           }
         });
         win.loadFile('game.html');
       } catch (error) {
-        console.error(error);
-        app.exit(1);
+        finishAudioSmoke(false, error.message);
       }
     });
   }
