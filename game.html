@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NimTD Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{overflow:hidden;background:#1a1a2e;color:#ccd3e7;font-family:Segoe UI,Arial,sans-serif;user-select:none}canvas{display:block}
+#ui{position:fixed;inset:10px 10px auto 10px;display:flex;justify-content:space-between;pointer-events:none;font-weight:800;text-shadow:0 0 8px #000}.stack{display:grid;gap:3px}#lives{color:#ff6680}#round-info{color:#ffaa00}#speed-indicator{color:#ff7658;font-size:12px}#score{color:#ffdd00;font-size:22px}#gold{color:#55aaff;font-size:20px}
+#side-panel{position:fixed;right:10px;top:60px;width:274px;max-height:calc(100vh - 72px);overflow:auto;padding:10px;border:2px solid #33405f;border-radius:8px;background:#141428f2;box-shadow:0 16px 36px #0008}h3{margin:7px 0 5px;padding-bottom:4px;border-bottom:1px solid #33405f;color:#ffaa00;font-size:13px;letter-spacing:.08em}
+.tower-option,.panel-btn,.map-btn{display:flex;width:100%;justify-content:space-between;gap:7px;margin:4px 0;padding:7px 8px;border:1px solid #44506f;border-radius:5px;background:#282846;color:#d8def0;text-align:left;cursor:pointer}.tower-option:hover,.panel-btn:hover,.map-btn:hover{border-color:#8297ff;background:#36365e}.disabled{opacity:.42;pointer-events:none}.selected{border-color:#ffdd00}.tower-name{font-size:12px;font-weight:800}.tower-mark{display:inline-grid;width:18px;height:18px;place-items:center;border:1px solid currentColor;border-radius:3px;font-size:10px}.tower-desc{margin-top:2px;color:#929bb4;font-size:10px}.tower-cost{color:#55aaff;font-size:11px}.panel-btn span{color:#55aaff}.sell{border-color:#853d4d}.maxed{padding:6px;color:#ffdd00;font-size:11px}#tower-stats{margin-top:7px;color:#9ea8c2;font-size:11px;line-height:1.6}#help{position:fixed;left:10px;bottom:10px;padding:7px 10px;border:1px solid #33405f;border-radius:5px;background:#141428e8;color:#9ea8c2;font-size:11px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="ui"><div class="stack"><div id="lives"></div><div id="round-info"></div><div id="speed-indicator"></div></div><div id="score"></div><div id="gold"></div></div>
+<aside id="side-panel"><h3>MAPS</h3><button class="panel-btn" id="open-maps">Open Map</button><button class="panel-btn" id="open-editor">Map Editor</button><div id="map-list"></div><h3>BUY TOWERS</h3><div id="buy-list"></div><h3>UPGRADES</h3><div id="upgrade-list"></div><div id="tower-stats"></div></aside>
+<div id="help">WASD move | Wheel zoom | Left click place/select | Right click cancel | E editor</div>
+<script src="js/game-config.js"></script><script src="js/towers.js"></script><script src="js/effects.js"></script><script src="js/tower-models.js"></script><script src="js/engine.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NimTD Starting</title>
+<style>
+@font-face{font-family:NimSplash;src:url("CinzelDecorative-Bold.otf") format("opentype");font-display:swap}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020603}body{position:relative;font-family:NimSplash,Consolas,monospace;color:#7dff70;user-select:none}.logo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(180deg,#0000 47%,#0008 67%,#000f 100%)}.terminal{position:absolute;right:22px;bottom:48px;left:22px;padding:12px 14px;border:1px solid #62ff5f88;background:#020802d9;box-shadow:0 0 18px #0bff451d,inset 0 0 16px #000b}.title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:#baffaa;font-size:11px;letter-spacing:.18em;text-shadow:0 0 9px #46ff65}.signal{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7dff70;box-shadow:0 0 10px #7dff70;animation:pulse 1s ease-in-out infinite}.log{height:74px;overflow:hidden;color:#70e86c;font-size:9px;line-height:1.65;letter-spacing:.07em;text-shadow:0 0 7px #42ff55}.line{white-space:nowrap}.line::before{content:"> ";color:#d0ffc7}.cursor::after{content:"_";animation:blink .65s steps(2,end) infinite}.progress{position:absolute;right:22px;bottom:18px;left:22px;display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center}.track{height:9px;overflow:hidden;border:1px solid #62ff5f99;background:#010401;box-shadow:0 0 12px #0bff4533,inset 0 0 5px #000}.fill{width:4%;height:100%;background:linear-gradient(90deg,#188b32,#70ff71);box-shadow:0 0 12px #70ff71;transition:width .32s ease}.percent{min-width:37px;color:#baffaa;font-size:9px;letter-spacing:.08em;text-align:right;text-shadow:0 0 7px #42ff55}@keyframes pulse{50%{opacity:.35}}@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<img class="logo" src="logo.png" alt="">
+<div class="shade"></div>
+<section class="terminal" aria-live="polite">
+  <div class="title"><span>NIMTD BOOT SEQUENCE</span><span class="signal"></span></div>
+  <div class="log" id="log"><div class="line cursor">INITIALIZING</div></div>
+</section>
+<div class="progress" aria-label="Loading progress"><div class="track"><div class="fill" id="progress-fill"></div></div><div class="percent" id="progress-percent">04%</div></div>
+<script>
+const log=document.getElementById('log');
+const fill=document.getElementById('progress-fill'),percent=document.getElementById('progress-percent');
+const TOTAL_STEPS=6;
+window.splashAPI.onProgress(({step,message})=>{
+  log.querySelector('.cursor')?.classList.remove('cursor');
+  const line=document.createElement('div');
+  line.className='line cursor';
+  line.textContent=message;
+  log.appendChild(line);
+  while(log.children.length>5)log.firstElementChild.remove();
+  const value=Math.round(step/TOTAL_STEPS*100);
+  fill.style.width=value+'%';
+  percent.textContent=String(value).padStart(2,'0')+'%';
+});
+</script>
+</body>
+</html>

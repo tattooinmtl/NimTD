@@ -1,0 +1,14 @@
+{
+  "name": "nimtd-engine",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "set \"ELECTRON_RUN_AS_NODE=\" && electron .",
+    "editor": "set \"ELECTRON_RUN_AS_NODE=\" && electron . --editor",
+    "game": "set \"ELECTRON_RUN_AS_NODE=\" && electron . --game"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3"
+  }
+}
